@@ -1,0 +1,72 @@
+/* ANIMUS light theme: a white "memory void" with drifting shards, glitch transitions and Hawk Vision.
+   Loaded after hud.css; everything is scoped to html.light so the dark HUD stays available (◐ toggle). */
+html.light{
+  --bg:#f3f6f8; --bg2:#ffffff; --panel:rgba(255,255,255,.74); --panel-solid:#fff;
+  --line:rgba(24,70,100,.13); --line2:rgba(24,70,100,.28);
+  --cyan:#0b8db5; --cyan-dim:#5fb3cc; --gold:#b97c0e; --gold-dim:#b8a27a; --red:#d2364a;
+  --ink:#16242f; --ink2:#4b6172; --muted:#8798a5; --good:#16a36b; --warn:#b97c0e; --bad:#d2364a;
+  color-scheme: light;
+}
+html.light body{background:radial-gradient(1200px 800px at 60% 0%,#fff,#eef2f5 70%) fixed;color:var(--ink)}
+html.light .scan{display:none}
+#void{position:fixed;inset:0;z-index:0;pointer-events:none}
+html:not(.light) #void{opacity:.35;mix-blend-mode:screen}
+.top,nav,main,.drawer,.toast{z-index:2}
+main{position:relative}
+
+/* chrome */
+html.light .top{background:rgba(255,255,255,.78);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+html.light .top::after{box-shadow:none}
+html.light .logo{color:var(--ink)}html.light .logo .sig{text-shadow:none}
+html.light nav{background:rgba(255,255,255,.62);backdrop-filter:blur(14px)}
+html.light nav button:hover{background:rgba(11,141,181,.07)}
+html.light nav button.on{background:linear-gradient(90deg,rgba(11,141,181,.16),transparent);color:var(--ink)}
+html.light nav button.on b,html.light .led.on{text-shadow:none;box-shadow:none}
+nav button.on::after{content:"";position:absolute;right:8px;top:50%;width:14px;height:14px;margin-top:-7px;
+  background:conic-gradient(var(--cyan) 0 25%,transparent 0 50%,var(--gold) 0 75%,transparent 0);border-radius:50%;
+  animation:helix 2.4s linear infinite;opacity:.8}
+@keyframes helix{to{transform:rotate(360deg) scaleX(.4)}}
+
+/* surfaces */
+html.light .panel,html.light .tile,html.light .col,html.light .card,html.light .card3,html.light .drawer,html.light .maplist,
+html.light .legend,html.light .tip,html.light .sec,html.light .day,html.light .term{
+  background:var(--panel);backdrop-filter:blur(10px);border-color:var(--line);color:var(--ink);box-shadow:0 10px 30px -18px rgba(20,50,80,.35)}
+html.light .panel{clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
+html.light .panel.gold{background:linear-gradient(135deg,rgba(255,248,232,.85),rgba(255,255,255,.7))}
+html.light input,html.light select,html.light textarea{background:rgba(255,255,255,.9);color:var(--ink);border-color:var(--line2)}
+html.light .btn{color:var(--ink);background:linear-gradient(180deg,rgba(11,141,181,.12),rgba(11,141,181,.03))}
+html.light .btn:hover{background:var(--cyan);color:#fff;box-shadow:0 6px 18px -6px var(--cyan)}
+html.light .btn.gold{background:linear-gradient(180deg,rgba(185,124,14,.16),rgba(185,124,14,.04))}
+html.light .btn.gold:hover{background:var(--gold);color:#fff}
+html.light .chip{background:rgba(11,141,181,.06)}
+html.light .toast{background:rgba(255,255,255,.95);box-shadow:0 10px 30px -10px rgba(0,0,0,.25)}
+html.light .h h2,html.light .drawer h2,html.light .card3 h3,html.light .card b,html.light .item .t,html.light .tile .n,
+html.light .stat b,html.light .hero-n,html.light .choice b,html.light [style*="color:#fff"]{color:var(--ink)!important}
+html.light ::selection{background:var(--cyan);color:#fff}
+html.light .md{color:var(--ink)}
+html.light code,html.light .agentrow code{background:rgba(11,141,181,.08);color:var(--ink)}
+
+/* motion: views desync in, panels assemble one by one */
+main.desync{animation:desync .42s steps(1,end)}
+@keyframes desync{
+  0%{clip-path:inset(10% 0 70% 0);transform:translateX(-14px);filter:hue-rotate(40deg)}
+  20%{clip-path:inset(60% 0 12% 0);transform:translateX(10px)}
+  40%{clip-path:inset(30% 0 40% 0);transform:translateX(-6px)}
+  60%{clip-path:inset(0 0 0 0);transform:none;filter:none}}
+main .panel,main .tile,main .card3{animation:assemble .5s cubic-bezier(.2,.8,.2,1) both}
+main .panel:nth-child(2){animation-delay:.05s}main .panel:nth-child(3){animation-delay:.1s}main .panel:nth-child(4){animation-delay:.15s}
+@keyframes assemble{from{opacity:0;transform:translateY(14px) scale(.985);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+.panel{transition:transform .25s,box-shadow .25s}
+.panel:hover{transform:translateY(-2px)}
+.h h2{position:relative}
+.h h2::after{content:attr(data-g);position:absolute;left:2px;top:0;color:var(--cyan);opacity:0;clip-path:inset(0 0 60% 0)}
+.h h2:hover::after{animation:glitch .5s 1}
+@keyframes glitch{0%,100%{opacity:0}20%{opacity:.7;transform:translate(3px,-1px)}40%{opacity:.5;transform:translate(-3px,1px)}}
+
+/* Hawk Vision (press V): everything fades except what matters */
+body.hawk main{filter:saturate(.15) contrast(.9)}
+body.hawk main .score.hi,body.hawk main .r-legendary,body.hawk main .r-epic,body.hawk main [data-hawk]{filter:none;outline:2px solid var(--gold);
+  box-shadow:0 0 24px var(--gold)!important;position:relative;z-index:3}
+body.hawk::after{content:"HAWK VISION";position:fixed;top:66px;right:24px;z-index:30;font:800 11px var(--hud);letter-spacing:.4em;color:var(--gold)}
+.themebtn{background:none;border:1px solid var(--line2);color:var(--ink2);font:700 12px var(--hud);padding:4px 9px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){main.desync,main .panel,nav button.on::after{animation:none}#void{display:none}}

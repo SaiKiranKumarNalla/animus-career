@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ANIMUS Career</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600&family=Manrope:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Palette after Paris, 1789: parchment and stone by day, midnight navy and lamplight by night; brass and tricolour accents. */
+:root{
+  --bg:#efe8da; --bg2:#e4dccb; --glass:rgba(255,252,245,.55); --glass2:rgba(255,252,245,.78); --edge:rgba(60,50,30,.12);
+  --ink:#1d2433; --ink2:#5b6273; --muted:#8c8f98; --blue:#24477a; --gold:#a8812c; --red:#9e2f3c; --stone:#b9b2a3;
+  --shadow:0 20px 50px -30px rgba(40,30,10,.45);
+}
+:root[data-theme="dark"]{
+  --bg:#0c111c; --bg2:#141b2a; --glass:rgba(26,34,52,.5); --glass2:rgba(30,40,60,.72); --edge:rgba(214,190,130,.14);
+  --ink:#ece4d2; --ink2:#a9a493; --muted:#6d7180; --blue:#6f95d6; --gold:#d8b25c; --red:#d0566a; --stone:#4a5164;
+  --shadow:0 20px 60px -30px rgba(0,0,0,.8);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c111c; --bg2:#141b2a; --glass:rgba(26,34,52,.5); --glass2:rgba(30,40,60,.72); --edge:rgba(214,190,130,.14);
+  --ink:#ece4d2; --ink2:#a9a493; --muted:#6d7180; --blue:#6f95d6; --gold:#d8b25c; --red:#d0566a; --stone:#4a5164;
+  --shadow:0 20px 60px -30px rgba(0,0,0,.8)}}
+*{box-sizing:border-box;margin:0}
+body{background:radial-gradient(1100px 700px at 70% 10%,var(--bg2),var(--bg));color:var(--ink);font:400 14px/1.55 Manrope,system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+.glass{background:var(--glass);backdrop-filter:blur(22px) saturate(1.3);-webkit-backdrop-filter:blur(22px) saturate(1.3);border:1px solid var(--edge);border-radius:18px;box-shadow:var(--shadow)}
+#scene{position:fixed;inset:0;z-index:0}
+#labels{position:fixed;inset:0;pointer-events:none;z-index:1}
+#labels span{position:absolute;transform:translate(10px,-50%);font:500 11px Manrope;color:var(--ink2);white-space:nowrap;transition:opacity .2s}
+#labels span.me{font:600 13px Sora;color:var(--gold);letter-spacing:.08em}
+.shell{position:relative;z-index:2;display:grid;grid-template-columns:72px 1fr 300px;gap:16px;padding:16px;min-height:100vh;pointer-events:none}
+.shell>*{pointer-events:auto}
+nav{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 0}
+.mark{font:600 20px Sora;color:var(--gold);margin-bottom:14px}
+nav button{width:44px;height:44px;border:0;border-radius:12px;background:none;color:var(--ink2);cursor:pointer;font-size:18px;position:relative}
+nav button:hover{background:var(--glass2);color:var(--ink)}
+nav button.on{background:var(--glass2);color:var(--blue)}
+nav button.on::before{content:"";position:absolute;left:-14px;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--gold)}
+nav button[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:54px;top:50%;transform:translateY(-50%);background:var(--glass2);backdrop-filter:blur(12px);border:1px solid var(--edge);padding:4px 10px;border-radius:8px;font-size:12px;color:var(--ink);white-space:nowrap}
+nav .grow{flex:1}
+.center{display:flex;flex-direction:column;pointer-events:none}
+.center>*{pointer-events:auto}
+header{display:flex;align-items:center;gap:14px;padding:10px 16px}
+header h1{font:300 15px Sora;letter-spacing:.32em;white-space:nowrap}
+header h1 b{color:var(--gold);font-weight:600}
+.sync{display:flex;align-items:center;gap:10px;margin-left:12px;font-size:12px;color:var(--ink2)}
+.sync i{width:120px;height:4px;border-radius:4px;background:var(--edge);overflow:hidden}
+.sync i::after{content:"";display:block;height:100%;width:var(--p,64%);background:linear-gradient(90deg,var(--blue),var(--gold))}
+.k{margin-left:auto;display:flex;gap:8px;align-items:center}
+.cmd{border:1px solid var(--edge);background:var(--glass2);color:var(--ink2);border-radius:10px;padding:7px 12px;font:inherit;cursor:pointer;min-width:220px;text-align:left}
+.cmd kbd{float:right;font:500 11px Manrope;color:var(--muted)}
+.icon{border:1px solid var(--edge);background:var(--glass2);color:var(--ink);border-radius:10px;width:34px;height:34px;cursor:pointer}
+.hint{align-self:center;margin-top:auto;margin-bottom:12px;transition:opacity 1s;font-size:12px;color:var(--muted);padding:6px 14px;border-radius:20px}
+.dock{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.card{padding:16px 18px}
+.card h3{font:600 11px Manrope;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between}
+.row{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--edge);font-size:13px}
+.row:first-of-type{border-top:0}
+.row .r{margin-left:auto;font:500 12px 'JetBrains Mono',monospace;color:var(--ink2)}
+.up{color:var(--blue)!important}.gap{color:var(--red)!important}
+.q{width:16px;height:16px;border:1.5px solid var(--gold);border-radius:4px;transform:rotate(45deg);flex:none;cursor:pointer}
+.q.done{background:var(--gold)}
+.xp{font:600 11px Manrope;color:var(--gold)}
+.tier{font:600 10px Manrope;letter-spacing:.1em;padding:2px 7px;border-radius:6px;background:var(--glass2);border:1px solid var(--edge)}
+.tier.leg{color:var(--gold);border-color:var(--gold)}.tier.epic{color:var(--blue)}
+aside{display:flex;flex-direction:column;gap:16px}
+.node{padding:20px}
+.node .kind{font:600 10px Manrope;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.node h2{font:300 24px Sora;letter-spacing:.02em;margin:6px 0 4px}
+.node p{color:var(--ink2);font-size:13px}
+.links{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:4px 10px;border-radius:20px;border:1px solid var(--edge);background:var(--glass2);cursor:pointer;color:var(--ink)}
+.chip:hover{border-color:var(--gold)}
+.add{display:grid;gap:8px;padding:18px}
+.add input,.add select{width:100%;border:1px solid var(--edge);background:var(--glass2);color:var(--ink);border-radius:10px;padding:9px 11px;font:inherit}
+.btn{border:0;border-radius:10px;padding:10px;font:600 13px Manrope;cursor:pointer;background:var(--blue);color:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--ink2);padding:12px 16px}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.tilt{transform-style:preserve-3d;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.tilt:hover{transition:transform .08s}
+.emb{width:34px;height:34px;perspective:200px;margin-bottom:16px}
+.emb i{display:block;position:relative;width:100%;height:100%;transform-style:preserve-3d;animation:spin 9s linear infinite}
+.emb b{position:absolute;inset:0;clip-path:polygon(50% 4%,96% 92%,4% 92%);background:linear-gradient(160deg,var(--gold),transparent 140%);opacity:.85}
+.emb b:nth-child(2){transform:rotateY(60deg)}.emb b:nth-child(3){transform:rotateY(120deg);background:linear-gradient(160deg,var(--blue),transparent 140%)}
+@keyframes spin{to{transform:rotateY(360deg) rotateX(12deg)}}
+.cry{width:22px;height:22px;flex:none}
+.fade{animation:fade .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}}
+@media (max-width:1200px){.sync{display:none}.cmd{min-width:0}}
+@media (max-width:1000px){.shell{grid-template-columns:1fr;padding:12px}nav{flex-direction:row;justify-content:center}nav .grow,.mark{display:none}.dock{grid-template-columns:1fr}aside{order:3}.cmd{min-width:0}}
+@media (prefers-reduced-motion:reduce){.tilt{transform-style:preserve-3d;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.tilt:hover{transition:transform .08s}
+.emb{width:34px;height:34px;perspective:200px;margin-bottom:16px}
+.emb i{display:block;position:relative;width:100%;height:100%;transform-style:preserve-3d;animation:spin 9s linear infinite}
+.emb b{position:absolute;inset:0;clip-path:polygon(50% 4%,96% 92%,4% 92%);background:linear-gradient(160deg,var(--gold),transparent 140%);opacity:.85}
+.emb b:nth-child(2){transform:rotateY(60deg)}.emb b:nth-child(3){transform:rotateY(120deg);background:linear-gradient(160deg,var(--blue),transparent 140%)}
+@keyframes spin{to{transform:rotateY(360deg) rotateX(12deg)}}
+.cry{width:22px;height:22px;flex:none}
+.fade{animation:none}}
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="labels"></div>
+<div class="shell">
+  <nav class="glass">
+    <div class="emb"><i><b></b><b></b><b></b></i></div>
+    <button class="on" data-tip="Memory core (graph)">⟁</button>
+    <button data-tip="Opportunities">◇</button>
+    <button data-tip="Career hub">✦</button>
+    <button data-tip="Tracker">▤</button>
+    <button data-tip="Coach">◉</button>
+    <div class="grow"></div>
+    <button data-tip="Connections">⧉</button>
+    <button data-tip="Settings">⚙</button>
+  </nav>
+  <div class="center">
+    <header class="glass">
+      <h1>ANIMUS <b>·</b> CAREER</h1>
+      <div class="sync">Sync <i style="--p:64%"></i> <span>Lv 7 · 64%</span></div>
+      <div class="k"><button class="cmd">Search or run a command… <kbd>⌘K</kbd></button>
+        <button class="icon" id="theme" title="Light / dark">◐</button></div>
+    </header>
+    <div class="hint glass" id="hint">Drag to orbit · scroll to zoom · click a memory</div>
+    <div class="dock">
+      <div class="card glass fade tilt"><h3>This week's quests <span class="xp">+120 XP</span></h3>
+        <div class="row"><span class="q done"></span>Rate yourself on 5 skills<span class="r xp">20</span></div>
+        <div class="row"><span class="q"></span>Add a README demo to your top repo<span class="r xp">50</span></div>
+        <div class="row"><span class="q"></span>Apply to one legendary opportunity<span class="r xp">50</span></div></div>
+      <div class="card glass fade tilt" style="animation-delay:.06s"><h3>Rising skills <span>vs. your graph</span></h3>
+        <div class="row"><canvas class="cry" data-c="--blue" data-h="1"></canvas>PyTorch<span class="r up">▲ 12 · have</span></div>
+        <div class="row"><canvas class="cry" data-c="--red" data-h="0"></canvas>MLOps<span class="r gap">▲ 9 · gap</span></div>
+        <div class="row"><canvas class="cry" data-c="--red" data-h="0"></canvas>Rust<span class="r gap">▲ 4 · gap</span></div></div>
+      <div class="card glass fade tilt" style="animation-delay:.12s"><h3>Top matches</h3>
+        <div class="row"><span class="tier leg">LEGENDARY</span>Research Engineer · DeepMind<span class="r">92</span></div>
+        <div class="row"><span class="tier epic">EPIC</span>PhD · ETH Zürich vision lab<span class="r">86</span></div>
+        <div class="row"><span class="tier">RARE</span>ML Intern · Owkin<span class="r">78</span></div></div>
+    </div>
+  </div>
+  <aside>
+    <div class="node glass fade tilt" id="node"></div>
+    <div class="add glass fade" style="animation-delay:.08s">
+      <div class="kind" style="font:600 10px Manrope;letter-spacing:.16em;color:var(--muted)">ADD A MEMORY</div>
+      <input id="al" placeholder="Course, paper, repo, skill…">
+      <select id="ak"><option>skill</option><option selected>project</option><option>publication</option><option>certification</option><option>domain</option></select>
+      <button class="btn" id="add">Add to graph</button>
+    </div>
+    <div class="legend glass" id="legend"></div>
+  </aside>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const root = document.documentElement, css = v => getComputedStyle(root).getPropertyValue(v).trim();
+const KIND = {person: '--gold', skill: '--blue', tool: '--blue', project: '--gold', role: '--red', organization: '--red',
+  education: '--stone', publication: '--red', certification: '--stone', domain: '--red', note: '--muted'};
+const DEMO = {nodes: [['me', 'person', 'Me'], ['py', 'skill', 'Python'], ['pt', 'skill', 'PyTorch'], ['cv', 'skill', 'Computer vision'], ['sql', 'skill', 'SQL'],
+  ['p1', 'project', 'Brain MRI segmentation'], ['p2', 'project', 'Retina screening app'], ['r1', 'role', 'ML Engineer · Startup'], ['e1', 'education', 'MSc Biomedical Eng'],
+  ['pub', 'publication', 'MICCAI workshop paper'], ['d1', 'domain', 'Climate tech'], ['dk', 'tool', 'Docker'], ['c1', 'certification', 'AWS ML Specialty']].map(([id, kind, label]) => ({id, kind, label, detail: ''})),
+  edges: [['me', 'p1'], ['me', 'p2'], ['me', 'r1'], ['me', 'e1'], ['me', 'pub'], ['me', 'd1'], ['p1', 'pt'], ['p1', 'cv'], ['p1', 'py'], ['p2', 'cv'], ['p2', 'dk'],
+    ['r1', 'sql'], ['r1', 'py'], ['r1', 'dk'], ['pub', 'p1'], ['e1', 'cv'], ['me', 'c1'], ['c1', 'dk']].map(([src, dst]) => ({src, dst, rel: 'related_to'}))};
+
+let G, W, H, renderer, scene, cam, group, meshes = [], lineGeo, line, sel = 'me';
+const rot = {x: -.25, y: 0, vx: 0, vy: .0016}, dist = {v: 320};
+
+async function load() {
+  try { const g = await (await fetch('/api/kg')).json(); if (g.nodes && g.nodes.length > 2) return g; } catch (e) {}
+  return DEMO;
+}
+function layout(g) {
+  const P = {}; g.nodes.forEach((n, i) => { const a = i * 2.4, z = (i % 5 - 2) * 30; P[n.id] = new THREE.Vector3(Math.cos(a) * (60 + i * 6), Math.sin(a) * (60 + i * 6), z); });
+  if (P.me) P.me.set(0, 0, 0);
+  const deg = {}; g.edges.forEach(e => { deg[e.src] = (deg[e.src] || 0) + 1; deg[e.dst] = (deg[e.dst] || 0) + 1; });
+  for (let it = 0; it < 300; it++) {
+    const F = {}; g.nodes.forEach(n => F[n.id] = new THREE.Vector3());
+    for (const a of g.nodes) for (const b of g.nodes) { if (a === b) continue; const d = P[a.id].clone().sub(P[b.id]); const l = Math.max(d.length(), 1); F[a.id].add(d.multiplyScalar(2200 / (l * l * l))); }
+    for (const e of g.edges) { const a = P[e.src], b = P[e.dst]; if (!a || !b) continue; const d = b.clone().sub(a), l = d.length(), f = (l - 70) * .02; d.normalize().multiplyScalar(f); F[e.src].add(d); F[e.dst].sub(d); }
+    g.nodes.forEach(n => { if (n.id !== 'me') P[n.id].add(F[n.id].clampLength(0, 6)); });
+  }
+  g.deg = deg; return P;
+}
+function color(kind) { return new THREE.Color(css(KIND[kind] || '--muted')); }
+function paint() {
+  meshes.forEach(m => { m.material.color = color(m.userData.kind); m.material.emissive = color(m.userData.kind); });
+  line.material.color = new THREE.Color(css('--ink2')); scene.fog.color = new THREE.Color(css('--bg'));
+  document.getElementById('legend').innerHTML = ['skill', 'project', 'role', 'education', 'domain'].map(k => `<span><i style="background:${css(KIND[k])}"></i>${k}</span>`).join('');
+}
+function build(g) {
+  G = g; const P = layout(g);
+  group.clear(); meshes = [];
+  const geo = new THREE.IcosahedronGeometry(1, 1);
+  g.nodes.forEach(n => {
+    const s = n.kind === 'person' ? 9 : 3.2 + Math.min(g.deg[n.id] || 0, 6) * .6;
+    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({flatShading: true, roughness: .45, metalness: .25, emissiveIntensity: .18, transparent: true}));
+    m.scale.setScalar(s); m.position.copy(P[n.id]); m.userData = n; group.add(m); meshes.push(m);
+  });
+  const pts = []; g.edges.forEach(e => { if (P[e.src] && P[e.dst]) pts.push(P[e.src], P[e.dst]); });
+  lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+  line = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({transparent: true, opacity: .28}));
+  group.add(line);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(16, .35, 6, 64), new THREE.MeshBasicMaterial({color: css('--gold'), transparent: true, opacity: .6}));
+  ring.userData.ring = true; group.add(ring);
+  document.getElementById('labels').innerHTML = g.nodes.map(n => `<span data-id="${n.id}" class="${n.kind === 'person' ? 'me' : ''}">${n.label.replace(/</g, '&lt;')}</span>`).join('');
+  paint(); select(sel in P ? sel : g.nodes[0].id);
+}
+function select(id) {
+  sel = id; const n = G.nodes.find(x => x.id === id); if (!n) return;
+  const nb = G.edges.filter(e => e.src === id || e.dst === id).map(e => e.src === id ? e.dst : e.src);
+  meshes.forEach(m => m.material.opacity = (m.userData.id === id || nb.includes(m.userData.id)) ? 1 : .35);
+  const lbl = id => (G.nodes.find(x => x.id === id) || {}).label || id;
+  const box = document.getElementById('node'); box.classList.remove('fade'); void box.offsetWidth; box.classList.add('fade');
+  box.innerHTML = `<div class="kind">${n.kind}</div><h2>${lbl(id)}</h2><p>${n.detail || (n.kind === 'person' ? 'Your memory core. Everything the agents say about you is drawn from these links.' : 'Linked to ' + nb.length + ' memories.')}</p>
+    <div class="links">${nb.map(x => `<span class="chip" data-go="${x}">${lbl(x)}</span>`).join('')}</div>`;
+  box.querySelectorAll('[data-go]').forEach(c => c.onclick = () => select(c.dataset.go));
+}
+function init() {
+  const c = document.getElementById('scene');
+  renderer = new THREE.WebGLRenderer({canvas: c, antialias: true, alpha: true}); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  scene = new THREE.Scene(); scene.fog = new THREE.Fog(0, 350, 1500);
+  cam = new THREE.PerspectiveCamera(45, 1, 1, 2000);
+  scene.add(new THREE.AmbientLight(0xffffff, .75)); const d = new THREE.DirectionalLight(0xfff1d6, .9); d.position.set(80, 120, 160); scene.add(d);
+  group = new THREE.Group(); scene.add(group);
+  const size = () => { W = innerWidth; H = innerHeight; renderer.setSize(W, H); cam.aspect = W / H; cam.updateProjectionMatrix(); };
+  const frame = () => {  // centre the graph in the free space between header, dock and side panels
+    const c = document.querySelector('.center').getBoundingClientRect(), top = document.querySelector('header').getBoundingClientRect().bottom,
+      bot = document.querySelector('.dock').getBoundingClientRect().top;
+    cam.setViewOffset(W, H, W / 2 - (c.left + c.right) / 2, H / 2 - (top + bot) / 2, W, H);
+    dist.fit = 400 * Math.max(1, 420 / Math.max(200, bot - top));
+  };
+  size(); frame(); addEventListener('resize', () => { size(); frame(); });
+  let drag = null, moved = 0;
+  c.style.pointerEvents = 'auto';
+  addEventListener('pointerdown', e => { if (e.target.closest('.glass')) return; drag = [e.clientX, e.clientY]; moved = 0; });
+  addEventListener('pointermove', e => { if (!drag) return; const dx = e.clientX - drag[0], dy = e.clientY - drag[1]; moved += Math.abs(dx) + Math.abs(dy);
+    rot.vy = dx * .0006; rot.vx = dy * .0006; rot.y += dx * .006; rot.x = Math.max(-1.2, Math.min(1.2, rot.x + dy * .006)); drag = [e.clientX, e.clientY]; });
+  addEventListener('pointerup', e => { if (drag && moved < 5) pick(e); drag = null; });
+  addEventListener('wheel', e => { if (e.target.closest('.glass')) return; dist.v = Math.max(140, Math.min(900, dist.v + e.deltaY * .3)); }, {passive: true});
+  const ray = new THREE.Raycaster();
+  function pick(e) { ray.setFromCamera({x: e.clientX / W * 2 - 1, y: -e.clientY / H * 2 + 1}, cam); const h = ray.intersectObjects(meshes)[0]; if (h) select(h.object.userData.id); }
+  const v = new THREE.Vector3(), spans = () => document.querySelectorAll('#labels span'), t0 = performance.now();
+  (function loop(t) {
+    if (!document.hidden) {
+      if (!drag) { rot.y += rot.vy; rot.vy += (.0016 - rot.vy) * .02; rot.x += rot.vx; rot.vx *= .94; }
+      group.rotation.set(rot.x, rot.y, 0);
+      cam.position.set(0, 0, dist.v); cam.lookAt(0, 0, 0);
+      const ring = group.children.find(o => o.userData.ring), s = meshes.find(m => m.userData.id === sel);
+      if (ring && s) { ring.position.copy(s.position); ring.scale.setScalar(s.scale.x / 9 + .3 + Math.sin((t - t0) / 400) * .05); ring.lookAt(cam.position.clone().applyMatrix4(group.matrixWorld.clone().invert())); }
+      meshes.forEach(m => m.rotation.y += .004); tickA && tickA(); tickC && tickC();
+      renderer.render(scene, cam);
+      spans().forEach(sp => { const m = meshes.find(x => x.userData.id === sp.dataset.id); if (!m) return;
+        m.getWorldPosition(v); const z = v.clone().applyMatrix4(cam.matrixWorldInverse).z; v.project(cam);
+        sp.style.left = (v.x + 1) / 2 * W + m.scale.x * 1.2 + 'px'; sp.style.top = (1 - v.y) / 2 * H + 'px';
+        sp.style.opacity = Math.max(.15, Math.min(1, (-z - 120) / -260 + 1.6)) * (m.material.opacity < 1 ? .5 : 1); });
+    }
+    requestAnimationFrame(loop);
+  })(t0);
+}
+
+// --- extra 3D: drifting shard field + dust behind the graph, crystals in the skills card, card tilt ---
+function ambience() {
+  const shardGeo = new THREE.TetrahedronGeometry(1, 0), n = 70;
+  const shards = new THREE.InstancedMesh(shardGeo, new THREE.MeshStandardMaterial({flatShading: true, transparent: true, opacity: .13, roughness: .3, metalness: .5}), n);
+  const d = new THREE.Object3D(), data = [];
+  for (let i = 0; i < n; i++) { data.push({p: new THREE.Vector3((Math.random() - .5) * 1400, (Math.random() - .5) * 900, -250 - Math.random() * 500),
+    r: new THREE.Euler(Math.random() * 6, Math.random() * 6, 0), s: 4 + Math.random() * 16, v: .05 + Math.random() * .2}); }
+  scene.add(shards);
+  const dust = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(
+    Array.from({length: 900}, () => (Math.random() - .5) * 700), 3)), new THREE.PointsMaterial({size: 1.6, transparent: true, opacity: .45, sizeAttenuation: true}));
+  group.add(dust);
+  const tint = () => { shards.material.color = new THREE.Color(css('--gold')); dust.material.color = new THREE.Color(css('--blue')); };
+  tint(); window.tintAmbience = tint;
+  return () => {
+    for (let i = 0; i < n; i++) { const o = data[i]; o.p.y += o.v; if (o.p.y > 500) o.p.y = -500; o.r.x += .002; o.r.y += .003;
+      d.position.set(o.p.x - rot.y * 40, o.p.y + rot.x * 40, o.p.z); d.rotation.copy(o.r); d.scale.setScalar(o.s); d.updateMatrix(); shards.setMatrixAt(i, d.matrix); }
+    shards.instanceMatrix.needsUpdate = true; dust.rotation.y += .0004;
+  };
+}
+function crystals() {
+  const out = [];
+  document.querySelectorAll('.cry').forEach(cv => {
+    const r = new THREE.WebGLRenderer({canvas: cv, alpha: true, antialias: true}); r.setPixelRatio(2); r.setSize(22, 22, false);
+    const sc = new THREE.Scene(), cm = new THREE.PerspectiveCamera(35, 1, .1, 20); cm.position.z = 4;
+    sc.add(new THREE.AmbientLight(0xffffff, .7)); const l = new THREE.DirectionalLight(0xffffff, .9); l.position.set(2, 3, 4); sc.add(l);
+    const m = new THREE.Mesh(new THREE.OctahedronGeometry(1, 0), new THREE.MeshStandardMaterial({flatShading: true, metalness: .4, roughness: .3,
+      transparent: true, opacity: cv.dataset.h === '1' ? 1 : .55, wireframe: cv.dataset.h !== '1'}));
+    sc.add(m); out.push(() => { m.material.color = new THREE.Color(css(cv.dataset.c)); m.rotation.y += .02; m.rotation.x = .4; r.render(sc, cm); });
+  });
+  return () => out.forEach(f => f());
+}
+document.querySelectorAll('.tilt').forEach(el => {
+  el.addEventListener('pointermove', e => { const b = el.getBoundingClientRect(), x = (e.clientX - b.left) / b.width - .5, y = (e.clientY - b.top) / b.height - .5;
+    el.style.transform = `perspective(800px) rotateY(${x * 7}deg) rotateX(${-y * 7}deg) translateZ(4px)`; });
+  el.addEventListener('pointerleave', () => el.style.transform = '');
+});
+document.getElementById('theme').onclick = () => {
+  const dark = (root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
+  root.dataset.theme = dark ? 'light' : 'dark'; try { localStorage.setItem('theme2', root.dataset.theme); } catch (e) {} paint(); window.tintAmbience && tintAmbience();
+};
+try { const t = localStorage.getItem('theme2'); if (t) root.dataset.theme = t; } catch (e) {}
+document.getElementById('add').onclick = async () => {
+  const label = document.getElementById('al').value.trim(), kind = document.getElementById('ak').value; if (!label) return;
+  try { await fetch('/api/kg/node', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({kind, label, link_to: sel, rel: 'related_to'})}); } catch (e) {}
+  const id = 'new' + Date.now(); G.nodes.push({id, kind, label, detail: 'Just added'}); G.edges.push({src: sel, dst: id, rel: 'related_to'});
+  document.getElementById('al').value = ''; const keep = sel; build(G); select(id);
+};
+setTimeout(() => document.getElementById('hint').style.opacity = 0, 5000);
+let tickA, tickC;
+init(); tickA = ambience(); tickC = crystals(); load().then(g => { build(g); dist.v = dist.fit || 320; });
+</script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ANIMUS Career</title>
+<meta name="description" content="A private career agent: your resume becomes a 3D knowledge graph, and every skill syncs only with proof.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 30 28H2z' fill='%23a8812c'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Theme tokens. Palettes (app.js) overwrite these per light/dark; every colour on the page derives from them. */
+:root{
+  --bg:#efe8da; --bg2:#e4dccb; --ink:#1d2433; --ink2:#5b6273; --muted:#8c8f98;
+  --blue:#24477a; --gold:#a8812c; --red:#9e2f3c; --stone:#b9b2a3;
+  --glass:rgba(255,253,248,.42); --glass2:rgba(255,253,248,.7); --rim:rgba(255,255,255,.75); --edge:rgba(60,50,30,.12);
+  --shadow:0 24px 60px -32px rgba(40,30,10,.5);
+}
+:root[data-mode="dark"]{--glass:rgba(30,38,58,.38); --glass2:rgba(34,44,66,.66); --rim:rgba(255,255,255,.14); --edge:rgba(220,200,150,.13); --shadow:0 24px 70px -30px rgba(0,0,0,.85)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:radial-gradient(1100px 700px at 70% 10%,var(--bg2),var(--bg));color:var(--ink);font:400 14px/1.55 Manrope,system-ui,sans-serif;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--blue)}
+.row a,.card a[data-n]{color:var(--ink);text-decoration:none}.row a:hover{color:var(--blue)}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+
+/* liquid glass: blur + saturation, bright rim, inner depth and a specular sheen that follows the pointer */
+.glass{position:relative;background:var(--glass);backdrop-filter:blur(26px) saturate(1.8);-webkit-backdrop-filter:blur(26px) saturate(1.8);
+  border:1px solid var(--edge);border-radius:22px;box-shadow:var(--shadow),inset 0 1px 0 var(--rim),inset 0 -1px 0 rgba(0,0,0,.04),inset 0 0 24px rgba(255,255,255,.06);overflow:hidden}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(420px circle at var(--mx,30%) var(--my,0%),rgba(255,255,255,.28),transparent 45%),linear-gradient(160deg,rgba(255,255,255,.18),transparent 38%);mix-blend-mode:soft-light}
+.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;padding:1px;
+  background:linear-gradient(135deg,var(--rim),transparent 40%,transparent 60%,var(--rim));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:.7}
+.tilt{transform-style:preserve-3d;transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+
+#scene{position:fixed;inset:0;z-index:0}
+#labels{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+#labels span{position:absolute;transform:translate(10px,-50%);font:500 11px Manrope;color:var(--ink2);white-space:nowrap}
+#labels span.me{font:400 13px Sora;color:var(--gold);letter-spacing:.06em}
+#labels span.desync{color:var(--muted);font-style:italic}
+
+.shell{position:relative;z-index:2;display:grid;grid-template-columns:72px minmax(0,1fr) 330px;gap:16px;padding:16px;height:100vh;pointer-events:none}
+.shell>*{pointer-events:auto}
+nav{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 0}
+.emb{width:34px;height:34px;perspective:200px;margin-bottom:16px}
+.emb i{position:relative;display:block;width:100%;height:100%;transform-style:preserve-3d;animation:spin 9s linear infinite}
+.emb b{position:absolute;inset:0;clip-path:polygon(50% 4%,96% 92%,4% 92%);background:linear-gradient(160deg,var(--gold),transparent 140%);opacity:.85}
+.emb b:nth-child(2){transform:rotateY(60deg)}.emb b:nth-child(3){transform:rotateY(120deg);background:linear-gradient(160deg,var(--blue),transparent 140%)}
+@keyframes spin{to{transform:rotateY(360deg) rotateX(12deg)}}
+nav button{width:44px;height:44px;border:0;border-radius:14px;background:none;color:var(--ink2);cursor:pointer;font-size:18px;position:relative;z-index:1}
+nav button:hover,nav button.on{background:var(--glass2);color:var(--ink)}
+nav button.on{color:var(--blue)}
+nav button.on::before{content:"";position:absolute;left:-14px;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--gold)}
+nav .grow{flex:1}
+.center{display:flex;flex-direction:column;gap:16px;min-height:0;pointer-events:none}
+.center>*{pointer-events:auto}
+header{display:flex;align-items:center;gap:14px;padding:10px 16px;flex:none}
+header h1{font:300 15px Sora;letter-spacing:.32em;white-space:nowrap}
+header h1 b{color:var(--gold);font-weight:400}
+.sync{display:flex;align-items:center;gap:10px;margin-left:8px;font-size:12px;color:var(--ink2);white-space:nowrap}
+.sync i{width:130px;height:5px;border-radius:5px;background:var(--edge);overflow:hidden}
+.sync i::after{content:"";display:block;height:100%;width:var(--p,0%);background:linear-gradient(90deg,var(--blue),var(--gold));transition:width 1s}
+.mode{font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--edge);background:var(--glass2);color:var(--ink2);white-space:nowrap;cursor:pointer}
+.mode.on{color:var(--blue);border-color:var(--blue)}
+.k{margin-left:auto;display:flex;gap:8px;align-items:center}
+.icon{border:1px solid var(--edge);background:var(--glass2);border-radius:12px;width:34px;height:34px;cursor:pointer}
+.stage{flex:1;min-height:0;position:relative;pointer-events:none}
+.view{position:absolute;inset:0;overflow:auto;padding:2px;pointer-events:auto;display:none}
+.view.on{display:block;animation:in .45s cubic-bezier(.2,.8,.2,1)}
+.view.pass{pointer-events:none}.view.pass>*{pointer-events:auto}
+@keyframes in{from{opacity:0;transform:translateY(10px)}}
+.dock{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.card{padding:16px 18px}
+.card>*{position:relative;z-index:1}
+h3{font:600 11px Manrope;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between;gap:8px}
+h2{font:300 24px Sora;letter-spacing:.02em;margin:4px 0}
+.row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--edge);font-size:13px}
+.row:first-of-type{border-top:0}
+.row .r{margin-left:auto;font:500 12px "JetBrains Mono",monospace;color:var(--ink2);white-space:nowrap}
+.q{width:15px;height:15px;border:1.5px solid var(--gold);border-radius:4px;transform:rotate(45deg);flex:none;cursor:pointer;background:none;padding:0}
+.q.done{background:var(--gold)}
+.xp{color:var(--gold)!important}
+.tag{font:600 10px Manrope;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:7px;border:1px solid var(--edge);background:var(--glass2);white-space:nowrap}
+.s0{color:var(--muted)}.s1{color:var(--blue);border-color:var(--blue)}.s2{color:var(--gold);border-color:var(--gold)}
+aside{display:flex;flex-direction:column;gap:16px;min-height:0;overflow:auto;padding-bottom:2px}
+.kind{font:600 10px Manrope;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+p.sub{color:var(--ink2);font-size:13px}
+.chips{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:4px 10px;border-radius:20px;border:1px solid var(--edge);background:var(--glass2);cursor:pointer}
+.chip:hover{border-color:var(--gold)}
+.stack{display:grid;gap:8px}
+input,select,textarea{width:100%;border:1px solid var(--edge);background:var(--glass2);border-radius:12px;padding:9px 11px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+textarea{min-height:90px;resize:vertical}
+.btn{border:1px solid var(--edge);border-radius:12px;padding:9px 14px;font-weight:600;font-size:13px;cursor:pointer;background:var(--glass2)}
+.btn:hover{border-color:var(--blue)}
+.btn.p{background:var(--blue);color:#fff;border-color:transparent}
+.btn.g{background:var(--gold);color:#fff;border-color:transparent}
+.btn:disabled{opacity:.6;cursor:wait}
+.hstack{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.md{font-size:14px}.md h1,.md h2,.md h3{font:600 15px Sora;margin:14px 0 6px;letter-spacing:0;text-transform:none;color:var(--ink)}
+.md ul{padding-left:20px}.md p{margin:6px 0}
+.note{font-size:12px;color:var(--muted)}
+.hidden{display:none!important}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--ink2)}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.sw{display:flex;gap:6px;flex-wrap:wrap}
+.sw button{border:1px solid var(--edge);border-radius:12px;padding:8px 10px;cursor:pointer;background:var(--glass2);display:flex;gap:6px;align-items:center;font-size:12px}
+.sw button.on{border-color:var(--gold)}
+.sw i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.toast{position:fixed;right:20px;bottom:20px;z-index:9;padding:10px 16px;font-size:13px}
+.overlay{position:fixed;inset:0;z-index:8;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.08)}
+.overlay>.glass{width:min(560px,100%);padding:26px}
+.ld{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:rot .7s linear infinite;vertical-align:-2px}
+@keyframes rot{to{transform:rotate(360deg)}}
+body.wide .shell{grid-template-columns:72px minmax(0,1fr)}body.wide aside{display:none}
+/* tracker */
+.kan{display:grid;grid-template-columns:repeat(6,minmax(170px,1fr));gap:12px;overflow-x:auto;padding-bottom:4px}
+.kcol{padding:12px;min-height:420px}.kcol.over{outline:2px dashed var(--gold)}
+.kcard{position:relative;z-index:1;padding:10px 12px;margin-top:8px;border-radius:14px;background:var(--glass2);border:1px solid var(--edge);border-left:3px solid var(--blue);cursor:grab;font-size:13px}
+.kcard b{display:block}.kcard .note{display:block}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal .dow{font:600 10px Manrope;letter-spacing:.14em;color:var(--muted);text-align:center}
+.cal .day{min-height:86px;padding:6px;border-radius:12px;background:var(--glass2);border:1px solid var(--edge);font-size:11px;cursor:pointer;overflow:hidden}
+.cal .day.other{opacity:.45}.cal .day.today{border-color:var(--gold)}
+.ev{display:block;margin-top:3px;padding:1px 6px;border-radius:6px;background:var(--glass);border-left:2px solid var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev.deadline{border-color:var(--red)}.ev.interview{border-color:var(--gold)}.ev.done{opacity:.5;text-decoration:line-through}
+.globe{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px}
+#gl{width:100%;height:560px;display:block;cursor:grab}
+@media (max-width:1000px){.globe{grid-template-columns:1fr}#gl{height:380px}}
+/* practice */
+.chat{display:flex;flex-direction:column;gap:10px;min-height:200px;max-height:52vh;overflow:auto;padding-right:4px}
+.msg{flex:none;padding:10px 14px;border-radius:16px;max-width:85%;font-size:14px}
+.msg.iq{background:var(--glass2);border:1px solid var(--edge);align-self:flex-start}
+.msg.ia{background:var(--blue);color:#fff;align-self:flex-end}
+.score{font:500 12px "JetBrains Mono",monospace;color:var(--gold)}
+/* write */
+.seg{display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--glass2);border:1px solid var(--edge);flex-wrap:wrap}
+.seg button{border:0;background:none;padding:7px 12px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;color:var(--ink2)}
+.seg button.on{background:var(--blue);color:#fff}
+.wgrid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px}
+.doc{min-height:420px}
+@media (max-width:1000px){.wgrid{grid-template-columns:1fr}}
+/* discover: a 3D deck. Rarity sets the rim colour; drag or use the arrow keys */
+.disc{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;height:100%}
+.deckzone{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;min-height:560px;perspective:1400px}
+.deck{position:relative;width:min(520px,100%);height:440px;transform-style:preserve-3d}
+.dcard{position:absolute;inset:0;padding:22px 24px;cursor:grab;touch-action:none;user-select:none;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .3s;display:flex;flex-direction:column;gap:8px}
+.dcard>*{position:relative;z-index:1}
+.dcard:active{cursor:grabbing}
+.dcard[data-k="0"]{background:var(--glass2);backdrop-filter:blur(34px) saturate(1.8);-webkit-backdrop-filter:blur(34px) saturate(1.8)}
+.dcard:not([data-k="0"])>*{visibility:hidden}
+.dcard .top{display:flex;align-items:center;gap:10px}
+.fit{font:500 26px "JetBrains Mono",monospace;line-height:1}
+.dcard h2{font-size:22px}
+.dcard .blurb{color:var(--ink2);font-size:13px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical}
+.r-legendary{--rar:var(--gold)}.r-epic{--rar:var(--red)}.r-rare{--rar:var(--blue)}.r-uncommon{--rar:var(--stone)}.r-common{--rar:var(--edge)}
+.dcard.glass{border:1.5px solid var(--rar)}
+.dcard.r-legendary.glass{box-shadow:var(--shadow),0 0 0 1px var(--gold),0 0 38px -8px var(--gold),inset 0 1px 0 var(--rim)}
+.dcard.r-epic.glass{box-shadow:var(--shadow),0 0 30px -10px var(--red),inset 0 1px 0 var(--rim)}
+.rar{font:600 10px Manrope;letter-spacing:.16em;color:var(--rar);text-transform:uppercase}
+.stamp{position:absolute!important;top:22px;right:22px;font:600 18px Sora;letter-spacing:.2em;padding:4px 12px;border:2px solid;border-radius:10px;opacity:0;transform:rotate(8deg)}
+.stamp.like{color:var(--blue)}.stamp.nope{color:var(--red);left:22px;right:auto;transform:rotate(-8deg)}.stamp.super{color:var(--gold)}.stamp.later{color:var(--muted)}
+.swipebar{display:flex;gap:12px}
+.swipebar button{width:52px;height:52px;border-radius:50%;font-size:20px;cursor:pointer;border:1px solid var(--edge);background:var(--glass2)}
+.swipebar button:hover{transform:translateY(-2px)}
+.swipebar .like{color:var(--blue)}.swipebar .nope{color:var(--red)}.swipebar .super{color:var(--gold)}
+.chipline{display:flex;flex-wrap:wrap;gap:5px}
+.chip.have{border-color:var(--blue);color:var(--blue)}.chip.miss{border-style:dashed;color:var(--ink2)}
+.hot .row{align-items:flex-start}
+.scope{display:flex;gap:6px}.scope button.on{border-color:var(--gold);color:var(--gold)}
+@media (max-width:900px){.disc{grid-template-columns:1fr}}
+@media (max-width:1100px){.sync i{width:80px}}
+@media (max-width:900px){body{overflow:auto}.shell{grid-template-columns:1fr;height:auto;min-height:100vh;padding:12px}
+  nav{flex-direction:row;justify-content:center;padding:8px}.emb,nav .grow{display:none}nav button.on::before{display:none}
+  .stage{min-height:70vh}.view{position:relative}.dock{position:relative}.sync{display:none}aside{overflow:visible}}
+@media (prefers-reduced-motion:reduce){.emb i,.view.on{animation:none}}
+</style>
+</head>
+<body>
+<canvas id="scene" aria-hidden="true"></canvas>
+<div id="labels" aria-hidden="true"></div>
+<div class="shell">
+  <nav class="glass" aria-label="Sections">
+    <div class="emb" aria-hidden="true"><i><b></b><b></b><b></b></i></div>
+    <button data-v="core" title="Memory core (knowledge graph)" class="on">⟁</button>
+    <button data-v="discover" title="Discover opportunities">⇆</button>
+    <button data-v="write" title="Write: resume, letters, emails, LinkedIn">✎</button>
+    <button data-v="track" title="Tracker: board, deadlines, globe">▤</button>
+    <button data-v="research" title="Research: companies, labs, people, countries">⌕</button>
+    <button data-v="practice" title="Practice: mock interviews and cheatsheets">◎</button>
+    <button data-v="sync" title="Sources and skills you are learning">◈</button>
+    <button data-v="coach" title="Coach">◉</button>
+    <button data-v="opps" title="Opportunities">◇</button>
+    <div class="grow"></div>
+    <button data-v="settings" title="Models, palette, data">⚙</button>
+  </nav>
+  <div class="center">
+    <header class="glass">
+      <h1>ANIMUS <b>·</b> CAREER</h1>
+      <div class="sync" title="Progress on the skills you chose to learn">Sync <i id="syncbar"></i> <span class="mono" id="synctxt">0%</span> <span id="lvl" class="mono"></span></div>
+      <div class="k"><span class="mode" id="mode" title="Where your data lives">Browser</span>
+        <button class="icon" id="modeBtn" title="Light / dark">◐</button></div>
+    </header>
+    <div class="stage">
+      <section class="view pass on" id="v-core">
+        <div class="dock">
+          <div class="card glass tilt"><h3>Quests <span class="xp mono" id="qxp"></span></h3><div id="quests"></div></div>
+          <div class="card glass tilt"><h3>Suggested for you <span>add as a goal?</span></h3><div id="sugg"></div></div>
+          <div class="card glass tilt"><h3>Learning <span>sync progress</span></h3><div id="goals"></div></div>
+        </div>
+      </section>
+      <section class="view" id="v-discover"></section>
+      <section class="view" id="v-write"></section>
+      <section class="view" id="v-track"></section>
+      <section class="view" id="v-research"></section>
+      <section class="view" id="v-practice"></section>
+      <section class="view" id="v-sync"></section>
+      <section class="view" id="v-coach"></section>
+      <section class="view" id="v-opps"></section>
+      <section class="view" id="v-settings"></section>
+    </div>
+  </div>
+  <aside>
+    <div class="card glass tilt" id="node"></div>
+    <div class="card glass tilt">
+      <h3>Add a memory</h3>
+      <div class="stack"><input id="al" placeholder="Course, paper, repo, skill…" aria-label="Name">
+        <select id="ak" aria-label="Type"></select>
+        <button class="btn p" id="add">Add to graph</button></div>
+    </div>
+    <div class="card glass"><div class="legend" id="legend"></div></div>
+  </aside>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="graph3d.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
