@@ -9,10 +9,18 @@ machine except in prompts to your own AI accounts.
 
 > Status: early public version (1.0). macOS and Linux are tested; Windows support is new, so please report issues.
 
+**▶ Try the web version: [saikirankumarnalla.github.io/animus-career](https://saikirankumarnalla.github.io/animus-career/)** (no install, data stays in your browser)
+
+![Your CV as a 3D knowledge graph](docs/img/graph.jpg)
+
+| Onboarding | |
+|---|---|
+| ![Onboarding](docs/img/onboarding.jpg) | Pick a model (local Ollama, your own API key, or the local agent), add your resume, and ANIMUS builds the graph. "Explore a sample first" shows the fictional sample above. |
+
 ## Two ways to use it
 | | **Web version** (no install) | **Local agent** (full) |
 |---|---|---|
-| Where | `https://<you>.github.io/animus_career` | `animus open` on your computer |
+| Where | `https://saikirankumarnalla.github.io/animus-career/` | `animus open` on your computer |
 | Your data | only in your browser | only in a database on your computer |
 | Models | your API key (Claude, OpenAI, Gemini, DeepSeek, OpenRouter) or **local models** (Ollama, LM Studio) | your **Claude Code / Codex / Gemini subscriptions**, Ollama, or any OpenAI-compatible endpoint |
 | Graph, sync, quests, coach | ✓ | ✓ |
@@ -68,12 +76,12 @@ Requires **Python 3.10+**. Then install at least one AI command-line tool and lo
 
 **macOS / Linux**
 ```bash
-git clone https://github.com/<you>/animus_career && cd animus_career
+git clone https://github.com/SaiKiranKumarNalla/animus-career && cd animus-career
 ./scripts/install.sh
 ```
 **Windows (PowerShell)**
 ```powershell
-git clone https://github.com/<you>/animus_career; cd animus_career
+git clone https://github.com/SaiKiranKumarNalla/animus-career; cd animus-career
 powershell -ExecutionPolicy Bypass -File scripts\install.ps1
 ```
 Then open **http://127.0.0.1:8765** (or run `animus open`). The **setup wizard** walks you through:
@@ -106,7 +114,7 @@ animus ask "…" | council "…" | cover JOB_ID | tailor JOB_ID | plan | weekly
 
 ## Publish the web version
 Push the repo to GitHub, then Settings → Pages → Source: **GitHub Actions**. The `Web app` workflow publishes
-`animus_career/web` to `https://<you>.github.io/<repo>/`. It is static files only: no domain, no server, no data.
+`animus_career/web` to `https://saikirankumarnalla.github.io/animus-career/`. It is static files only: no domain, no server, no data.
 
 ## Use it from Claude Code / Codex (MCP)
 ```bash
@@ -133,3 +141,10 @@ Field packs are plain JSON in `animus_career/packs/`; new packs for other fields
 
 ## License
 MIT. See [LICENSE](LICENSE).
+
+## Contact
+Built by **Sai Kiran Kumar Nalla, PhD** · Toulouse, France ·
+[LinkedIn](https://www.linkedin.com/in/sai-kiran-kumar-nalla-3a325314a/) · [Portfolio](https://saikirankumarnalla.github.io) ·
+saikirankumarnalla@gmail.com · Issues: [GitHub issues](https://github.com/SaiKiranKumarNalla/animus-career/issues)
+
+ANIMUS Career is the successor of [ANIMUS Jobs](https://github.com/SaiKiranKumarNalla/animus-jobs).
