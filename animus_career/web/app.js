@@ -24,6 +24,7 @@ const PALETTES = {
 /* ---------- AI providers (all called straight from this browser, or via the paired local agent) ---------- */
 const PROVIDERS = {
   agent: {name: 'Local ANIMUS agent', note: 'Uses whatever the agent has: Claude Code, Codex, Gemini, Ollama… (pair it below).'},
+  huggingface: {name: 'Hugging Face (your HF token)', url: 'https://router.huggingface.co/v1', model: 'Qwen/Qwen3-32B', note: 'Token from huggingface.co/settings/tokens with the "Make calls to Inference Providers" permission. Uses your HF inference credits; any model id from huggingface.co/models?inference_provider=all works.'},
   ollama: {name: 'Ollama (local, free)', url: 'http://localhost:11434', note: 'Qwen, Gemma, Llama, DeepSeek-R1… on your machine. For the web version start it with OLLAMA_ORIGINS=* ollama serve.'},
   lmstudio: {name: 'LM Studio (local)', url: 'http://localhost:1234/v1', note: 'Turn on "Enable CORS" in LM Studio\'s server tab.'},
   anthropic: {name: 'Claude (API key)', model: 'claude-sonnet-5-5', note: 'Key from console.anthropic.com. Sent only to Anthropic.'},
@@ -663,11 +664,24 @@ function onboarding() {
     <p class="sub" style="margin:8px 0 16px">Your resume becomes a 3D graph of your skills, methods, projects and roles. Add LinkedIn, GitHub, a portfolio or reports later; ANIMUS then suggests skills worth learning, each with a plan.
     Private by design: no account, no server, nothing stored outside this browser (or your own computer if you pair the local agent).</p>
     <div class="stack"><b style="font-size:13px">1 · Choose a model</b>
-    <div class="hstack"><button class="btn" data-q="ollama">Ollama on this computer (free)</button><button class="btn" data-q="key">Use an API key</button><button class="btn" data-q="agent">I run the local agent</button></div>
+    <div class="hstack"><button class="btn" data-q="hf">Hugging Face token</button><button class="btn" data-q="ollama">Ollama on this computer (free)</button><button class="btn" data-q="key">Other API key</button><button class="btn" data-q="agent">I run the local agent</button></div>
+    <div id="hfbox" class="hstack" style="display:none"><input id="hftok" type="password" placeholder="hf_… token (stays in this browser)" style="flex:1"><button class="btn" id="hfsave">Use it</button></div>
+    <details class="note" style="margin-top:4px"><summary style="cursor:pointer">More ways to connect: API providers, download, CLI, MCP</summary>
+    <div style="margin-top:8px;line-height:1.6">
+    <b>API providers</b> (⚙ Settings → Models): Claude, OpenAI, Gemini, DeepSeek, OpenRouter, Hugging Face, or any OpenAI-compatible endpoint. Keys stay in this browser and go only to that provider.<br>
+    <b>Local models</b>: Ollama (<span class="mono">OLLAMA_ORIGINS=* ollama serve</span>) or LM Studio with CORS on.<br>
+    <b>Download the full career agent</b> (scans, tracker, deadlines, weekly brief, your Claude Code / Codex / Gemini subscriptions):<br>
+    <span class="mono">git clone https://github.com/SaiKiranKumarNalla/animus-career && cd animus-career && ./scripts/install.sh</span><br>
+    <b>CLI</b>: <span class="mono">animus open</span> · <span class="mono">animus scan</span> · <span class="mono">animus jobs</span> · <span class="mono">animus pair</span> (then paste the code under ⚙ Settings to link this page).<br>
+    <b>MCP / API</b>: <span class="mono">animus mcp</span> exposes your career graph and tracker to Claude Code, Codex or any MCP client; the local agent also serves a REST API on 127.0.0.1:8765.
+    </div></details>
     <b style="font-size:13px;margin-top:8px">2 · Add your resume</b><input type="file" id="rf" accept=".pdf,.txt,.md"><textarea id="rt" placeholder="…or paste it here"></textarea>
     <div class="hstack"><button class="btn p" id="rgo">Build my graph</button><button class="btn" id="demo">Explore a sample first</button></div><p class="note" id="rmsg"></p></div></div></div>`;
   document.body.appendChild(o);
   o.querySelector('[data-q="ollama"]').onclick = () => { (S.settings.providers.ollama = S.settings.providers.ollama || {}).on = true; save(); $('#rmsg').textContent = 'Ollama selected. Start it with OLLAMA_ORIGINS=* ollama serve and pull a model, e.g. ollama pull qwen3.'; };
+  o.querySelector('[data-q="hf"]').onclick = () => { o.querySelector('#hfbox').style.display = 'flex'; o.querySelector('#hftok').focus(); };
+  o.querySelector('#hfsave').onclick = () => { const k = o.querySelector('#hftok').value.trim(); if (!k.startsWith('hf_')) return toast('That does not look like a Hugging Face token (hf_…).');
+    (S.settings.providers.huggingface = S.settings.providers.huggingface || {}).key = k; save(); $('#rmsg').textContent = 'Hugging Face selected (model: Qwen/Qwen3-32B, change it in ⚙ Settings). Uses your HF inference credits.'; };
   o.querySelector('[data-q="key"]').onclick = () => { o.remove(); show('settings'); };
   o.querySelector('[data-q="agent"]').onclick = () => { o.remove(); show('settings'); };
   o.querySelector('#demo').onclick = () => { o.remove(); demo(); };
