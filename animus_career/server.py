@@ -37,7 +37,7 @@ async def no_cache_ui(request, call_next):
 # ---- browser web app (GitHub Pages copy) → this local agent ---------------------------------------
 # Cross-origin calls are allowed only from the web app's origins, and only with the pairing code that
 # `animus pair` prints, so no other website can read the user's data from localhost.
-WEB_ORIGINS = re.compile(r"^(https://[a-z0-9-]+\.github\.io|http://(localhost|127\.0\.0\.1)(:\d+)?)$")
+WEB_ORIGINS = re.compile(r"^(https://[a-z0-9-]+\.github\.io|https://[a-z0-9-]+\.hf\.space|http://(localhost|127\.0\.0\.1)(:\d+)?)$")
 
 
 def pairing_code():
