@@ -32,6 +32,7 @@ const PROVIDERS = {
   gemini: {name: 'Gemini (API key)', model: 'gemini-2.5-flash', note: 'Key from aistudio.google.com.'},
   deepseek: {name: 'DeepSeek (API key)', url: 'https://api.deepseek.com', model: 'deepseek-chat', note: 'Key from platform.deepseek.com.'},
   openrouter: {name: 'OpenRouter (any open model)', url: 'https://openrouter.ai/api/v1', model: 'qwen/qwen3-32b', note: 'One key for Qwen, Gemma, Llama, DeepSeek, Mistral…'},
+  browser: {name: 'In-browser model (no key, free)', model: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC', note: 'Runs a small open model (Qwen2.5 1.5B) inside this browser with WebGPU: no key, no account, nothing leaves your computer. First use downloads about 1 GB; needs Chrome, Edge or another WebGPU browser. Good for trying ANIMUS; larger models give better results. Smaller and faster: Qwen2.5-0.5B-Instruct-q4f16_1-MLC.'},
 };
 const TASKS = {extract: 'Read resume → graph', verify: 'Check proof', coach: 'Quests and plans', chat: 'Coach chat'};
 
@@ -151,7 +152,18 @@ function providerFor(task) {
   if (AGENT) return 'agent';
   return Object.keys(PROVIDERS).find(p => p !== 'agent' && configured(p)) || '';
 }
-function configured(p) { const c = S.settings.providers[p] || {}; return p === 'agent' ? AGENT : p === 'ollama' || p === 'lmstudio' ? !!c.on : !!c.key; }
+function configured(p) { const c = S.settings.providers[p] || {}; return p === 'agent' ? AGENT : p === 'ollama' || p === 'lmstudio' || p === 'browser' ? !!c.on : !!c.key; }
+/* in-browser model (WebLLM, WebGPU) */
+let WEBLLM = null;
+async function browserModel(model) {
+  if (!navigator.gpu) throw new Error('This browser has no WebGPU. Use Chrome or Edge on a recent computer, or pick another model.');
+  if (WEBLLM && WEBLLM.model === model) return WEBLLM.engine;
+  const lib = await import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.79/+esm');
+  const show = m => { const el = document.querySelector('#rmsg'); if (el) el.textContent = m; };
+  toast('Loading the in-browser model (first time: about 1 GB, then cached)…');
+  const engine = await lib.CreateMLCEngine(model, {initProgressCallback: r => show('In-browser model: ' + (r.text || Math.round((r.progress || 0) * 100) + '%'))});
+  WEBLLM = {model, engine}; show('In-browser model ready.'); return engine;
+}
 async function ask(task, prompt, system) {
   system = system || 'You are a careful, honest career coach. Use only facts given to you about the person; never invent experience.';
   const p = providerFor(task); if (!p) throw new Error('Set up a model first (⚙ Settings → Models).');
@@ -169,6 +181,11 @@ async function ask(task, prompt, system) {
     const d = await json(`https://generativelanguage.googleapis.com/v1beta/models/${c.model || 'gemini-2.5-flash'}:generateContent`, {method: 'POST',
       headers: {'content-type': 'application/json', 'x-goog-api-key': c.key}, body: JSON.stringify({systemInstruction: {parts: [{text: system}]}, contents: [{role: 'user', parts: [{text: prompt}]}]})});
     return strip(((d.candidates || [])[0]?.content?.parts || []).map(x => x.text || '').join(''));
+  }
+  if (p === 'browser') {
+    const eng = await browserModel(c.model || PROVIDERS.browser.model);
+    const d = await eng.chat.completions.create({messages: [{role: 'system', content: system}, {role: 'user', content: prompt}], temperature: 0.3});
+    return strip(d.choices[0].message.content);
   }
   if (p === 'ollama') {
     let model = c.model; if (!model) { const t = await json(c.url + '/api/tags'); model = (t.models || [])[0]?.name; if (!model) throw new Error('Ollama has no models: run `ollama pull qwen3`'); }
@@ -315,7 +332,7 @@ V.settings = () => {
   const st = S.settings, pv = st.providers;
   $('#v-settings').innerHTML = `<div class="grid2">
    <div class="card glass"><h3>Models</h3><p class="note">Keys stay in this browser and go only to that provider. Local models never leave your machine.</p>
-    ${Object.entries(PROVIDERS).filter(([k]) => k !== 'agent').map(([k, p]) => { const c = pv[k] || {}; const local = k === 'ollama' || k === 'lmstudio';
+    ${Object.entries(PROVIDERS).filter(([k]) => k !== 'agent').map(([k, p]) => { const c = pv[k] || {}; const local = k === 'ollama' || k === 'lmstudio' || k === 'browser';
       return `<div class="row" style="flex-wrap:wrap"><b style="flex:1">${p.name}</b><span class="tag ${configured(k) ? 's2' : 's0'}">${configured(k) ? 'on' : 'off'}</span>
       <div class="stack" style="width:100%">${local ? `<label class="hstack note"><input type="checkbox" data-p="${k}" data-f="on" ${c.on ? 'checked' : ''} style="width:auto"> use it</label>` : `<input type="password" data-p="${k}" data-f="key" placeholder="API key" value="${esc(c.key || '')}">`}
       <div class="hstack">${p.url !== undefined ? `<input data-p="${k}" data-f="url" placeholder="${esc(p.url)}" value="${esc(c.url || '')}" style="flex:2">` : ''}<input data-p="${k}" data-f="model" placeholder="${esc(p.model || 'model (blank = first installed)')}" value="${esc(c.model || '')}" style="flex:1"></div>
@@ -664,7 +681,7 @@ function onboarding() {
     <p class="sub" style="margin:8px 0 16px">Your resume becomes a 3D graph of your skills, methods, projects and roles. Add LinkedIn, GitHub, a portfolio or reports later; ANIMUS then suggests skills worth learning, each with a plan.
     Private by design: no account, no server, nothing stored outside this browser (or your own computer if you pair the local agent).</p>
     <div class="stack"><b style="font-size:13px">1 · Choose a model</b>
-    <div class="hstack"><button class="btn" data-q="hf">Hugging Face token</button><button class="btn" data-q="ollama">Ollama on this computer (free)</button><button class="btn" data-q="key">Other API key</button><button class="btn" data-q="agent">I run the local agent</button></div>
+    <div class="hstack"><button class="btn p" data-q="browser">Try with no key (in-browser)</button><button class="btn" data-q="hf">Hugging Face token</button><button class="btn" data-q="ollama">Ollama on this computer (free)</button><button class="btn" data-q="key">Other API key</button><button class="btn" data-q="agent">I run the local agent</button></div>
     <div id="hfbox" class="hstack" style="display:none"><input id="hftok" type="password" placeholder="hf_… token (stays in this browser)" style="flex:1"><button class="btn" id="hfsave">Use it</button></div>
     <details class="note" style="margin-top:4px"><summary style="cursor:pointer">More ways to connect: API providers, download, CLI, MCP</summary>
     <div style="margin-top:8px;line-height:1.6">
@@ -679,6 +696,8 @@ function onboarding() {
     <div class="hstack"><button class="btn p" id="rgo">Build my graph</button><button class="btn" id="demo">Explore a sample first</button></div><p class="note" id="rmsg"></p></div></div></div>`;
   document.body.appendChild(o);
   o.querySelector('[data-q="ollama"]').onclick = () => { (S.settings.providers.ollama = S.settings.providers.ollama || {}).on = true; save(); $('#rmsg').textContent = 'Ollama selected. Start it with OLLAMA_ORIGINS=* ollama serve and pull a model, e.g. ollama pull qwen3.'; };
+  o.querySelector('[data-q="browser"]').onclick = () => { (S.settings.providers.browser = S.settings.providers.browser || {}).on = true; save();
+    $('#rmsg').textContent = navigator.gpu ? 'In-browser model selected (Qwen2.5 1.5B). It downloads about 1 GB on first use, then stays cached. Nothing leaves your computer.' : 'This browser has no WebGPU: use Chrome or Edge, or pick another model.'; };
   o.querySelector('[data-q="hf"]').onclick = () => { o.querySelector('#hfbox').style.display = 'flex'; o.querySelector('#hftok').focus(); };
   o.querySelector('#hfsave').onclick = () => { const k = o.querySelector('#hftok').value.trim(); if (!k.startsWith('hf_')) return toast('That does not look like a Hugging Face token (hf_…).');
     (S.settings.providers.huggingface = S.settings.providers.huggingface || {}).key = k; save(); $('#rmsg').textContent = 'Hugging Face selected (model: Qwen/Qwen3-32B, change it in ⚙ Settings). Uses your HF inference credits.'; };
