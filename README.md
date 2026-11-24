@@ -9,7 +9,7 @@ machine except in prompts to your own AI accounts.
 
 > Status: early public version (1.0). macOS and Linux are tested; Windows support is new, so please report issues.
 
-**▶ Try the web version: [saikirankumarnalla.github.io/animus-career](https://saikirankumarnalla.github.io/animus-career/)** (no install, data stays in your browser)
+**▶ Try the web version:** [GitHub Pages](https://saikirankumarnalla.github.io/animus-career/) · [Hugging Face Space](https://huggingface.co/spaces/DroaningGrowler/animus-career) (no install, data stays in your browser)
 
 ![Your CV as a 3D knowledge graph](docs/img/graph.jpg)
 
